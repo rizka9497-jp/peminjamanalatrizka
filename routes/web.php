@@ -1,91 +1,44 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\KategoriController;
+use App\Http\Controllers\Admin\AlatController;
+use App\Http\Controllers\Admin\PeminjamanController;
+use App\Http\Controllers\Admin\PengembalianController;
+use App\Http\Controllers\Admin\LogActivityController;
+use App\Http\Controllers\Admin\LaporanController;
+
+use App\Http\Controllers\Peminjam\DashboardController as PeminjamDashboardController;
+use App\Http\Controllers\Peminjam\PeminjamanController as PeminjamPeminjamanController;
+
+use App\Models\Alat;
 
 /*
 |--------------------------------------------------------------------------
-| CONTROLLER LANDING
+| LANDING PAGE
 |--------------------------------------------------------------------------
 */
 
-use App\Http\Controllers\Landing\LandingController;
+Route::get('/', function () {
+
+    $alats = Alat::latest()->take(6)->get();
+
+    return view('welcome', compact('alats'));
+});
 
 /*
 |--------------------------------------------------------------------------
-| CONTROLLER AUTH
+| LOGIN
 |--------------------------------------------------------------------------
 */
 
-use App\Http\Controllers\Auth\UserAuthController;
-use App\Http\Controllers\Auth\PeminjamAuthController;
-
-/*
-|--------------------------------------------------------------------------
-| CONTROLLER DASHBOARD
-|--------------------------------------------------------------------------
-*/
-
-use App\Http\Controllers\Dashboard\DashboardAdminController;
-use App\Http\Controllers\Dashboard\DashboardPetugasController;
-use App\Http\Controllers\Dashboard\DashboardPeminjamController;
-
-/*
-|--------------------------------------------------------------------------
-| CONTROLLER MASTER
-|--------------------------------------------------------------------------
-*/
-
-use App\Http\Controllers\Master\UserController;
-
-/*
-|--------------------------------------------------------------------------
-| LANDING
-|--------------------------------------------------------------------------
-*/
-
-Route::get('/', [LandingController::class, 'home']);
-
-Route::get('/tentang', [LandingController::class, 'tentang']);
-
-Route::get('/kontak', [LandingController::class, 'kontak']);
-
-Route::get('/daftaralat', [LandingController::class, 'daftaralat']);
-
-/*
-|--------------------------------------------------------------------------
-| PILIH LOGIN
-|--------------------------------------------------------------------------
-*/
-
-Route::get('/login', function () {
-
-    return view('auth.pilihlogin');
-
-})->name('login');
-
-/*
-|--------------------------------------------------------------------------
-| LOGIN USER (ADMIN & PETUGAS)
-|--------------------------------------------------------------------------
-*/
-
-Route::get('/loginuser', [UserAuthController::class, 'login']);
-
-Route::post('/prosesloginuser', [UserAuthController::class, 'proseslogin']);
-
-Route::get('/logoutuser', [UserAuthController::class, 'logout']);
-
-/*
-|--------------------------------------------------------------------------
-| LOGIN PEMINJAM
-|--------------------------------------------------------------------------
-*/
-
-Route::get('/loginpeminjam', [PeminjamAuthController::class, 'login']);
-
-Route::post('/prosesloginpeminjam', [PeminjamAuthController::class, 'proseslogin']);
-
-Route::get('/logoutpeminjam', [PeminjamAuthController::class, 'logout']);
+Route::get('/login', [AuthController::class, 'showLogin']);
+Route::post('/login', [AuthController::class, 'login']);
+Route::get('/logout', [AuthController::class, 'logout']);
 
 /*
 |--------------------------------------------------------------------------
@@ -93,24 +46,39 @@ Route::get('/logoutpeminjam', [PeminjamAuthController::class, 'logout']);
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['role:admin'])->group(function () {
+Route::middleware('role:admin')->group(function () {
+
+    Route::get('/admin/dashboard', [DashboardController::class, 'index']);
+
+    Route::resource('/admin/users', UserController::class);
+    Route::resource('/admin/kategori', KategoriController::class);
+    Route::resource('/admin/alats', AlatController::class);
+    Route::resource('/admin/peminjamans', PeminjamanController::class);
+
+    // Approve / Reject
+    Route::get('/admin/peminjamans/{id}/approve', [PeminjamanController::class, 'approve']);
+    Route::get('/admin/peminjamans/{id}/reject', [PeminjamanController::class, 'reject']);
 
     /*
     |--------------------------------------------------------------------------
-    | DASHBOARD ADMIN
+    | PENGEMBALIAN (FIX ERROR ROUTE HERE)
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/dashboardadmin', [DashboardAdminController::class, 'index']);
+    Route::get('/admin/pengembalian', [PengembalianController::class, 'index'])
+        ->name('pengembalian.index');
+
+    Route::post('/admin/pengembalian', [PengembalianController::class, 'store'])
+        ->name('pengembalian.store');
 
     /*
     |--------------------------------------------------------------------------
-    | CRUD USER
+    | LOG & LAPORAN
     |--------------------------------------------------------------------------
     */
 
-    Route::resource('/user', UserController::class);
-
+    Route::get('/admin/log-activity', [LogActivityController::class, 'index']);
+    Route::get('/admin/laporan', [LaporanController::class, 'index']);
 });
 
 /*
@@ -119,16 +87,13 @@ Route::middleware(['role:admin'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['role:petugas'])->group(function () {
+Route::middleware('role:petugas')->group(function () {
 
-    /*
-    |--------------------------------------------------------------------------
-    | DASHBOARD PETUGAS
-    |--------------------------------------------------------------------------
-    */
+    Route::get('/petugas/dashboard', [\App\Http\Controllers\Petugas\DashboardController::class, 'index']);
 
-    Route::get('/dashboardpetugas', [DashboardPetugasController::class, 'index']);
+    Route::get('/petugas/peminjaman', [PeminjamanController::class, 'index']);
 
+    Route::get('/petugas/pengembalian', [PengembalianController::class, 'index']);
 });
 
 /*
@@ -137,14 +102,13 @@ Route::middleware(['role:petugas'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['peminjam'])->group(function () {
+Route::middleware('role:peminjam')->group(function () {
 
-    /*
-    |--------------------------------------------------------------------------
-    | DASHBOARD PEMINJAM
-    |--------------------------------------------------------------------------
-    */
+    Route::get('/peminjam/dashboard', [PeminjamDashboardController::class, 'index']);
 
-    Route::get('/dashboardpeminjam', [DashboardPeminjamController::class, 'index']);
+    Route::get('/peminjam/alat', [PeminjamPeminjamanController::class, 'alat']);
+    Route::post('/peminjam/pinjam', [PeminjamPeminjamanController::class, 'store']);
 
+    Route::get('/peminjam/peminjaman', [PeminjamPeminjamanController::class, 'peminjaman']);
+    Route::get('/peminjam/riwayat', [PeminjamPeminjamanController::class, 'riwayat']);
 });

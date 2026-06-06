@@ -9,10 +9,26 @@ class Alat extends Model
     protected $table = 'alats';
 
     protected $fillable = [
-        'nama_alat',
         'kategori_id',
+        'nama_alat',
         'stok',
         'kondisi',
         'foto',
+        'status'
     ];
+
+    public function kategori()
+    {
+        return $this->belongsTo(Kategori::class);
+    }
+
+    public function peminjamans()
+    {
+        return $this->hasMany(Peminjaman::class);
+    }
+
+    public function detailPeminjamans()
+    {
+        return $this->hasMany(DetailPeminjaman::class);
+    }
 }

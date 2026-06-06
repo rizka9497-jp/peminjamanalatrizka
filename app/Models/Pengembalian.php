@@ -9,9 +9,18 @@ class Pengembalian extends Model
     protected $table = 'pengembalians';
 
     protected $fillable = [
+
         'peminjaman_id',
         'tanggal_pengembalian',
+        'keterlambatan',
         'denda',
-        'keterangan',
+        'kondisi_kembali',
+        'status'
+
     ];
+
+    public function peminjaman()
+    {
+        return $this->belongsTo(Peminjaman::class);
+    }
 }

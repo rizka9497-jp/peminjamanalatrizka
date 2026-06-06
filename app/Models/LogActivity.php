@@ -6,31 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class LogActivity extends Model
 {
-    /*
-    |--------------------------------------------------------------------------
-    | NAMA TABEL
-    |--------------------------------------------------------------------------
-    */
-
     protected $table = 'log_activities';
-
-    /*
-    |--------------------------------------------------------------------------
-    | PRIMARY KEY
-    |--------------------------------------------------------------------------
-    */
-
-    protected $primaryKey = 'id';
-
-    /*
-    |--------------------------------------------------------------------------
-    | MASS ASSIGNMENT
-    |--------------------------------------------------------------------------
-    */
 
     protected $fillable = [
         'user_id',
-        'aktivitas',
-        'keterangan',
+        'aktivitas'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
